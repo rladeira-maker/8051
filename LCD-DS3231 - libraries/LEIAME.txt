@@ -1,0 +1,23 @@
+Para funcionar o DS3231, fiz alterações na biblioteca IIC, acrescentando
+funcionalidades específicas para o DS3231. Com isso, alterei ainda o
+iic.h. Não foi implementada função para ajustar data e hora do DS3231. Farei
+isso outra hora. Por enquanto, estou ajustando o relógio pelo Arduino.
+
+Foram utilizados os programas main.c, iic.c, lcd.c e delay.c cujos códigos-fonte
+estão nas pastas IIC e LCD, neste repositório.
+
+Aqui foram vários testes. O arquivo funcional é o main.c. Como já dito, iic.h 
+(e iic.c) foram alterados para comunicar com o DS3231 permitindo inclusive ler
+os registradores de temperatura desse chip, algo que não estava previsto no pro-
+grama original no qual se baseei na internet.
+
+RTC.c foi um teste, não sei se funciona. Já main_2.c foi uma adaptação para uti-
+lizar o TM1637. Num primeiro teste, não funcionou. Depois de muito tentar, des-
+cobri que havia uma falha de projeto no shield Arduino contendo esse display (TM
+1637). Em paralelo com os pinos CLK e DIO há dois capacitores. No shield, estes
+capacitores estão com valores errados. Eles deveriam ser de 100pF. Demorei para  
+identificar o problema pois o display funcionava direito no Arduino UNO mas não
+no 8051. Inicialmente achei que era um problema de programação. Ao retirar os 
+dois capacitores da placa, funcionou perfeitamente. #Ficaadica
+
+

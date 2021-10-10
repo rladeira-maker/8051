@@ -1,0 +1,641 @@
+                                      1 ;--------------------------------------------------------
+                                      2 ; File Created by SDCC : free open source ANSI-C Compiler
+                                      3 ; Version 4.1.0 #12072 (MINGW64)
+                                      4 ;--------------------------------------------------------
+                                      5 	.module ds1307
+                                      6 	.optsdcc -mmcs51 --model-small
+                                      7 	
+                                      8 ;--------------------------------------------------------
+                                      9 ; Public variables in this module
+                                     10 ;--------------------------------------------------------
+                                     11 	.globl _iic_read_byte
+                                     12 	.globl _iic_send_byte
+                                     13 	.globl _iic_nack
+                                     14 	.globl _iic_ack
+                                     15 	.globl _iic_stop
+                                     16 	.globl _iic_start
+                                     17 	.globl _delay_us
+                                     18 	.globl _CY
+                                     19 	.globl _AC
+                                     20 	.globl _F0
+                                     21 	.globl _RS1
+                                     22 	.globl _RS0
+                                     23 	.globl _OV
+                                     24 	.globl _F1
+                                     25 	.globl _P
+                                     26 	.globl _PS
+                                     27 	.globl _PT1
+                                     28 	.globl _PX1
+                                     29 	.globl _PT0
+                                     30 	.globl _PX0
+                                     31 	.globl _RD
+                                     32 	.globl _WR
+                                     33 	.globl _T1
+                                     34 	.globl _T0
+                                     35 	.globl _INT1
+                                     36 	.globl _INT0
+                                     37 	.globl _TXD
+                                     38 	.globl _RXD
+                                     39 	.globl _P3_7
+                                     40 	.globl _P3_6
+                                     41 	.globl _P3_5
+                                     42 	.globl _P3_4
+                                     43 	.globl _P3_3
+                                     44 	.globl _P3_2
+                                     45 	.globl _P3_1
+                                     46 	.globl _P3_0
+                                     47 	.globl _EA
+                                     48 	.globl _ES
+                                     49 	.globl _ET1
+                                     50 	.globl _EX1
+                                     51 	.globl _ET0
+                                     52 	.globl _EX0
+                                     53 	.globl _P2_7
+                                     54 	.globl _P2_6
+                                     55 	.globl _P2_5
+                                     56 	.globl _P2_4
+                                     57 	.globl _P2_3
+                                     58 	.globl _P2_2
+                                     59 	.globl _P2_1
+                                     60 	.globl _P2_0
+                                     61 	.globl _SM0
+                                     62 	.globl _SM1
+                                     63 	.globl _SM2
+                                     64 	.globl _REN
+                                     65 	.globl _TB8
+                                     66 	.globl _RB8
+                                     67 	.globl _TI
+                                     68 	.globl _RI
+                                     69 	.globl _P1_7
+                                     70 	.globl _P1_6
+                                     71 	.globl _P1_5
+                                     72 	.globl _P1_4
+                                     73 	.globl _P1_3
+                                     74 	.globl _P1_2
+                                     75 	.globl _P1_1
+                                     76 	.globl _P1_0
+                                     77 	.globl _TF1
+                                     78 	.globl _TR1
+                                     79 	.globl _TF0
+                                     80 	.globl _TR0
+                                     81 	.globl _IE1
+                                     82 	.globl _IT1
+                                     83 	.globl _IE0
+                                     84 	.globl _IT0
+                                     85 	.globl _P0_7
+                                     86 	.globl _P0_6
+                                     87 	.globl _P0_5
+                                     88 	.globl _P0_4
+                                     89 	.globl _P0_3
+                                     90 	.globl _P0_2
+                                     91 	.globl _P0_1
+                                     92 	.globl _P0_0
+                                     93 	.globl _B
+                                     94 	.globl _ACC
+                                     95 	.globl _PSW
+                                     96 	.globl _IP
+                                     97 	.globl _P3
+                                     98 	.globl _IE
+                                     99 	.globl _P2
+                                    100 	.globl _SBUF
+                                    101 	.globl _SCON
+                                    102 	.globl _P1
+                                    103 	.globl _TH1
+                                    104 	.globl _TH0
+                                    105 	.globl _TL1
+                                    106 	.globl _TL0
+                                    107 	.globl _TMOD
+                                    108 	.globl _TCON
+                                    109 	.globl _PCON
+                                    110 	.globl _DPH
+                                    111 	.globl _DPL
+                                    112 	.globl _SP
+                                    113 	.globl _P0
+                                    114 	.globl _ds1307_GetTime_PARM_3
+                                    115 	.globl _ds1307_GetTime_PARM_2
+                                    116 	.globl _ds1307_GetTemperature
+                                    117 	.globl _i2c_Clock
+                                    118 	.globl _ds1307_Init
+                                    119 	.globl _ds1307_Write
+                                    120 	.globl _ds1307_Read
+                                    121 	.globl _ds1307_GetTime
+                                    122 	.globl _ds1307_to_bcd
+                                    123 	.globl _ds1307_from_bcd
+                                    124 ;--------------------------------------------------------
+                                    125 ; special function registers
+                                    126 ;--------------------------------------------------------
+                                    127 	.area RSEG    (ABS,DATA)
+      000000                        128 	.org 0x0000
+                           000080   129 _P0	=	0x0080
+                           000081   130 _SP	=	0x0081
+                           000082   131 _DPL	=	0x0082
+                           000083   132 _DPH	=	0x0083
+                           000087   133 _PCON	=	0x0087
+                           000088   134 _TCON	=	0x0088
+                           000089   135 _TMOD	=	0x0089
+                           00008A   136 _TL0	=	0x008a
+                           00008B   137 _TL1	=	0x008b
+                           00008C   138 _TH0	=	0x008c
+                           00008D   139 _TH1	=	0x008d
+                           000090   140 _P1	=	0x0090
+                           000098   141 _SCON	=	0x0098
+                           000099   142 _SBUF	=	0x0099
+                           0000A0   143 _P2	=	0x00a0
+                           0000A8   144 _IE	=	0x00a8
+                           0000B0   145 _P3	=	0x00b0
+                           0000B8   146 _IP	=	0x00b8
+                           0000D0   147 _PSW	=	0x00d0
+                           0000E0   148 _ACC	=	0x00e0
+                           0000F0   149 _B	=	0x00f0
+                                    150 ;--------------------------------------------------------
+                                    151 ; special function bits
+                                    152 ;--------------------------------------------------------
+                                    153 	.area RSEG    (ABS,DATA)
+      000000                        154 	.org 0x0000
+                           000080   155 _P0_0	=	0x0080
+                           000081   156 _P0_1	=	0x0081
+                           000082   157 _P0_2	=	0x0082
+                           000083   158 _P0_3	=	0x0083
+                           000084   159 _P0_4	=	0x0084
+                           000085   160 _P0_5	=	0x0085
+                           000086   161 _P0_6	=	0x0086
+                           000087   162 _P0_7	=	0x0087
+                           000088   163 _IT0	=	0x0088
+                           000089   164 _IE0	=	0x0089
+                           00008A   165 _IT1	=	0x008a
+                           00008B   166 _IE1	=	0x008b
+                           00008C   167 _TR0	=	0x008c
+                           00008D   168 _TF0	=	0x008d
+                           00008E   169 _TR1	=	0x008e
+                           00008F   170 _TF1	=	0x008f
+                           000090   171 _P1_0	=	0x0090
+                           000091   172 _P1_1	=	0x0091
+                           000092   173 _P1_2	=	0x0092
+                           000093   174 _P1_3	=	0x0093
+                           000094   175 _P1_4	=	0x0094
+                           000095   176 _P1_5	=	0x0095
+                           000096   177 _P1_6	=	0x0096
+                           000097   178 _P1_7	=	0x0097
+                           000098   179 _RI	=	0x0098
+                           000099   180 _TI	=	0x0099
+                           00009A   181 _RB8	=	0x009a
+                           00009B   182 _TB8	=	0x009b
+                           00009C   183 _REN	=	0x009c
+                           00009D   184 _SM2	=	0x009d
+                           00009E   185 _SM1	=	0x009e
+                           00009F   186 _SM0	=	0x009f
+                           0000A0   187 _P2_0	=	0x00a0
+                           0000A1   188 _P2_1	=	0x00a1
+                           0000A2   189 _P2_2	=	0x00a2
+                           0000A3   190 _P2_3	=	0x00a3
+                           0000A4   191 _P2_4	=	0x00a4
+                           0000A5   192 _P2_5	=	0x00a5
+                           0000A6   193 _P2_6	=	0x00a6
+                           0000A7   194 _P2_7	=	0x00a7
+                           0000A8   195 _EX0	=	0x00a8
+                           0000A9   196 _ET0	=	0x00a9
+                           0000AA   197 _EX1	=	0x00aa
+                           0000AB   198 _ET1	=	0x00ab
+                           0000AC   199 _ES	=	0x00ac
+                           0000AF   200 _EA	=	0x00af
+                           0000B0   201 _P3_0	=	0x00b0
+                           0000B1   202 _P3_1	=	0x00b1
+                           0000B2   203 _P3_2	=	0x00b2
+                           0000B3   204 _P3_3	=	0x00b3
+                           0000B4   205 _P3_4	=	0x00b4
+                           0000B5   206 _P3_5	=	0x00b5
+                           0000B6   207 _P3_6	=	0x00b6
+                           0000B7   208 _P3_7	=	0x00b7
+                           0000B0   209 _RXD	=	0x00b0
+                           0000B1   210 _TXD	=	0x00b1
+                           0000B2   211 _INT0	=	0x00b2
+                           0000B3   212 _INT1	=	0x00b3
+                           0000B4   213 _T0	=	0x00b4
+                           0000B5   214 _T1	=	0x00b5
+                           0000B6   215 _WR	=	0x00b6
+                           0000B7   216 _RD	=	0x00b7
+                           0000B8   217 _PX0	=	0x00b8
+                           0000B9   218 _PT0	=	0x00b9
+                           0000BA   219 _PX1	=	0x00ba
+                           0000BB   220 _PT1	=	0x00bb
+                           0000BC   221 _PS	=	0x00bc
+                           0000D0   222 _P	=	0x00d0
+                           0000D1   223 _F1	=	0x00d1
+                           0000D2   224 _OV	=	0x00d2
+                           0000D3   225 _RS0	=	0x00d3
+                           0000D4   226 _RS1	=	0x00d4
+                           0000D5   227 _F0	=	0x00d5
+                           0000D6   228 _AC	=	0x00d6
+                           0000D7   229 _CY	=	0x00d7
+                                    230 ;--------------------------------------------------------
+                                    231 ; overlayable register banks
+                                    232 ;--------------------------------------------------------
+                                    233 	.area REG_BANK_0	(REL,OVR,DATA)
+      000000                        234 	.ds 8
+                                    235 ;--------------------------------------------------------
+                                    236 ; internal ram data
+                                    237 ;--------------------------------------------------------
+                                    238 	.area DSEG    (DATA)
+      000000                        239 _ds1307_GetTime_PARM_2:
+      000000                        240 	.ds 3
+      000003                        241 _ds1307_GetTime_PARM_3:
+      000003                        242 	.ds 3
+                                    243 ;--------------------------------------------------------
+                                    244 ; overlayable items in internal ram 
+                                    245 ;--------------------------------------------------------
+                                    246 ;--------------------------------------------------------
+                                    247 ; indirectly addressable internal ram data
+                                    248 ;--------------------------------------------------------
+                                    249 	.area ISEG    (DATA)
+                                    250 ;--------------------------------------------------------
+                                    251 ; absolute internal ram data
+                                    252 ;--------------------------------------------------------
+                                    253 	.area IABS    (ABS,DATA)
+                                    254 	.area IABS    (ABS,DATA)
+                                    255 ;--------------------------------------------------------
+                                    256 ; bit data
+                                    257 ;--------------------------------------------------------
+                                    258 	.area BSEG    (BIT)
+                                    259 ;--------------------------------------------------------
+                                    260 ; paged external ram data
+                                    261 ;--------------------------------------------------------
+                                    262 	.area PSEG    (PAG,XDATA)
+                                    263 ;--------------------------------------------------------
+                                    264 ; external ram data
+                                    265 ;--------------------------------------------------------
+                                    266 	.area XSEG    (XDATA)
+                                    267 ;--------------------------------------------------------
+                                    268 ; absolute external ram data
+                                    269 ;--------------------------------------------------------
+                                    270 	.area XABS    (ABS,XDATA)
+                                    271 ;--------------------------------------------------------
+                                    272 ; external initialized ram data
+                                    273 ;--------------------------------------------------------
+                                    274 	.area XISEG   (XDATA)
+                                    275 	.area HOME    (CODE)
+                                    276 	.area GSINIT0 (CODE)
+                                    277 	.area GSINIT1 (CODE)
+                                    278 	.area GSINIT2 (CODE)
+                                    279 	.area GSINIT3 (CODE)
+                                    280 	.area GSINIT4 (CODE)
+                                    281 	.area GSINIT5 (CODE)
+                                    282 	.area GSINIT  (CODE)
+                                    283 	.area GSFINAL (CODE)
+                                    284 	.area CSEG    (CODE)
+                                    285 ;--------------------------------------------------------
+                                    286 ; global & static initialisations
+                                    287 ;--------------------------------------------------------
+                                    288 	.area HOME    (CODE)
+                                    289 	.area GSINIT  (CODE)
+                                    290 	.area GSFINAL (CODE)
+                                    291 	.area GSINIT  (CODE)
+                                    292 ;--------------------------------------------------------
+                                    293 ; Home
+                                    294 ;--------------------------------------------------------
+                                    295 	.area HOME    (CODE)
+                                    296 	.area HOME    (CODE)
+                                    297 ;--------------------------------------------------------
+                                    298 ; code
+                                    299 ;--------------------------------------------------------
+                                    300 	.area CSEG    (CODE)
+                                    301 ;------------------------------------------------------------
+                                    302 ;Allocation info for local variables in function 'ds1307_GetTemperature'
+                                    303 ;------------------------------------------------------------
+                                    304 ;temp_MSB                  Allocated to registers r6 r7 
+                                    305 ;temp_LSB                  Allocated to registers r5 r4 
+                                    306 ;------------------------------------------------------------
+                                    307 ;	ds1307.c:23: signed int ds1307_GetTemperature()
+                                    308 ;	-----------------------------------------
+                                    309 ;	 function ds1307_GetTemperature
+                                    310 ;	-----------------------------------------
+      000000                        311 _ds1307_GetTemperature:
+                           000007   312 	ar7 = 0x07
+                           000006   313 	ar6 = 0x06
+                           000005   314 	ar5 = 0x05
+                           000004   315 	ar4 = 0x04
+                           000003   316 	ar3 = 0x03
+                           000002   317 	ar2 = 0x02
+                           000001   318 	ar1 = 0x01
+                           000000   319 	ar0 = 0x00
+                                    320 ;	ds1307.c:29: iic_start();             // start i2c communication
+      000000 12r00r00         [24]  321 	lcall	_iic_start
+                                    322 ;	ds1307.c:30: ds1307_Write(DS1307_ID);    
+      000003 75 82 D0         [24]  323 	mov	dpl,#0xd0
+      000006 12r00r88         [24]  324 	lcall	_ds1307_Write
+                                    325 ;	ds1307.c:31: ds1307_Write(TEMP_ADDRESS);
+      000009 75 82 11         [24]  326 	mov	dpl,#0x11
+      00000C 12r00r88         [24]  327 	lcall	_ds1307_Write
+                                    328 ;	ds1307.c:32: iic_stop();        
+      00000F 12r00r00         [24]  329 	lcall	_iic_stop
+                                    330 ;	ds1307.c:33: iic_start();               
+      000012 12r00r00         [24]  331 	lcall	_iic_start
+                                    332 ;	ds1307.c:34: ds1307_Write(0xD1); 
+      000015 75 82 D1         [24]  333 	mov	dpl,#0xd1
+      000018 12r00r88         [24]  334 	lcall	_ds1307_Write
+                                    335 ;	ds1307.c:35: temp_MSB = ds1307_Read();  iic_ack();
+      00001B 12r00r8E         [24]  336 	lcall	_ds1307_Read
+      00001E AE 82            [24]  337 	mov	r6,dpl
+      000020 7F 00            [12]  338 	mov	r7,#0x00
+      000022 C0 07            [24]  339 	push	ar7
+      000024 C0 06            [24]  340 	push	ar6
+      000026 12r00r00         [24]  341 	lcall	_iic_ack
+                                    342 ;	ds1307.c:36: temp_LSB= ds1307_Read() >> 6;  iic_nack();
+      000029 12r00r8E         [24]  343 	lcall	_ds1307_Read
+      00002C E5 82            [12]  344 	mov	a,dpl
+      00002E 23               [12]  345 	rl	a
+      00002F 23               [12]  346 	rl	a
+      000030 54 03            [12]  347 	anl	a,#0x03
+      000032 FD               [12]  348 	mov	r5,a
+      000033 7C 00            [12]  349 	mov	r4,#0x00
+      000035 C0 05            [24]  350 	push	ar5
+      000037 C0 04            [24]  351 	push	ar4
+      000039 12r00r00         [24]  352 	lcall	_iic_nack
+      00003C D0 04            [24]  353 	pop	ar4
+      00003E D0 05            [24]  354 	pop	ar5
+      000040 D0 06            [24]  355 	pop	ar6
+      000042 D0 07            [24]  356 	pop	ar7
+                                    357 ;	ds1307.c:37: if (temp_LSB==3) temp_MSB ++;
+      000044 BD 03 08         [24]  358 	cjne	r5,#0x03,00102$
+      000047 BC 00 05         [24]  359 	cjne	r4,#0x00,00102$
+      00004A 0E               [12]  360 	inc	r6
+      00004B BE 00 01         [24]  361 	cjne	r6,#0x00,00111$
+      00004E 0F               [12]  362 	inc	r7
+      00004F                        363 00111$:
+      00004F                        364 00102$:
+                                    365 ;	ds1307.c:38: iic_stop();         // stop i2c communication after reading the Temp
+      00004F C0 07            [24]  366 	push	ar7
+      000051 C0 06            [24]  367 	push	ar6
+      000053 12r00r00         [24]  368 	lcall	_iic_stop
+      000056 D0 06            [24]  369 	pop	ar6
+      000058 D0 07            [24]  370 	pop	ar7
+                                    371 ;	ds1307.c:39: return temp_MSB;
+      00005A 8E 82            [24]  372 	mov	dpl,r6
+      00005C 8F 83            [24]  373 	mov	dph,r7
+                                    374 ;	ds1307.c:40: }
+      00005E 22               [24]  375 	ret
+                                    376 ;------------------------------------------------------------
+                                    377 ;Allocation info for local variables in function 'i2c_Clock'
+                                    378 ;------------------------------------------------------------
+                                    379 ;	ds1307.c:42: void i2c_Clock(void)
+                                    380 ;	-----------------------------------------
+                                    381 ;	 function i2c_Clock
+                                    382 ;	-----------------------------------------
+      00005F                        383 _i2c_Clock:
+                                    384 ;	ds1307.c:44: delay_us(50);
+      00005F 90 00 32         [24]  385 	mov	dptr,#0x0032
+      000062 12r00r00         [24]  386 	lcall	_delay_us
+                                    387 ;	ds1307.c:45: IIC_SCL = 1;        
+                                    388 ;	assignBit
+      000065 D2 97            [12]  389 	setb	_P1_7
+                                    390 ;	ds1307.c:47: delay_us(50);        
+      000067 90 00 32         [24]  391 	mov	dptr,#0x0032
+      00006A 12r00r00         [24]  392 	lcall	_delay_us
+                                    393 ;	ds1307.c:48: IIC_SCL = 0;        
+                                    394 ;	assignBit
+      00006D C2 97            [12]  395 	clr	_P1_7
+                                    396 ;	ds1307.c:49: }
+      00006F 22               [24]  397 	ret
+                                    398 ;------------------------------------------------------------
+                                    399 ;Allocation info for local variables in function 'ds1307_Init'
+                                    400 ;------------------------------------------------------------
+                                    401 ;	ds1307.c:53: void ds1307_Init()
+                                    402 ;	-----------------------------------------
+                                    403 ;	 function ds1307_Init
+                                    404 ;	-----------------------------------------
+      000070                        405 _ds1307_Init:
+                                    406 ;	ds1307.c:55: iic_start();            // Start i2c communication
+      000070 12r00r00         [24]  407 	lcall	_iic_start
+                                    408 ;	ds1307.c:57: ds1307_Write(DS1307_ID);   
+      000073 75 82 D0         [24]  409 	mov	dpl,#0xd0
+      000076 12r00r88         [24]  410 	lcall	_ds1307_Write
+                                    411 ;	ds1307.c:58: ds1307_Write(control);    
+      000079 75 82 07         [24]  412 	mov	dpl,#0x07
+      00007C 12r00r88         [24]  413 	lcall	_ds1307_Write
+                                    414 ;	ds1307.c:60: ds1307_Write(0x00);        
+      00007F 75 82 00         [24]  415 	mov	dpl,#0x00
+      000082 12r00r88         [24]  416 	lcall	_ds1307_Write
+                                    417 ;	ds1307.c:62: iic_stop();             
+                                    418 ;	ds1307.c:64: }
+      000085 02r00r00         [24]  419 	ljmp	_iic_stop
+                                    420 ;------------------------------------------------------------
+                                    421 ;Allocation info for local variables in function 'ds1307_Write'
+                                    422 ;------------------------------------------------------------
+                                    423 ;dat                       Allocated to registers 
+                                    424 ;------------------------------------------------------------
+                                    425 ;	ds1307.c:67: void ds1307_Write(unsigned char dat)
+                                    426 ;	-----------------------------------------
+                                    427 ;	 function ds1307_Write
+                                    428 ;	-----------------------------------------
+      000088                        429 _ds1307_Write:
+                                    430 ;	ds1307.c:69: iic_send_byte(dat);   
+      000088 12r00r00         [24]  431 	lcall	_iic_send_byte
+                                    432 ;	ds1307.c:70: i2c_Clock();
+                                    433 ;	ds1307.c:71: }
+      00008B 02r00r5F         [24]  434 	ljmp	_i2c_Clock
+                                    435 ;------------------------------------------------------------
+                                    436 ;Allocation info for local variables in function 'ds1307_Read'
+                                    437 ;------------------------------------------------------------
+                                    438 ;dat                       Allocated to registers 
+                                    439 ;------------------------------------------------------------
+                                    440 ;	ds1307.c:74: unsigned char ds1307_Read()
+                                    441 ;	-----------------------------------------
+                                    442 ;	 function ds1307_Read
+                                    443 ;	-----------------------------------------
+      00008E                        444 _ds1307_Read:
+                                    445 ;	ds1307.c:77: dat = iic_read_byte();   
+                                    446 ;	ds1307.c:78: return(dat);
+                                    447 ;	ds1307.c:79: }
+      00008E 02r00r00         [24]  448 	ljmp	_iic_read_byte
+                                    449 ;------------------------------------------------------------
+                                    450 ;Allocation info for local variables in function 'ds1307_GetTime'
+                                    451 ;------------------------------------------------------------
+                                    452 ;m_ptr                     Allocated with name '_ds1307_GetTime_PARM_2'
+                                    453 ;s_ptr                     Allocated with name '_ds1307_GetTime_PARM_3'
+                                    454 ;h_ptr                     Allocated to registers r5 r6 r7 
+                                    455 ;------------------------------------------------------------
+                                    456 ;	ds1307.c:108: void ds1307_GetTime(unsigned char *h_ptr,unsigned char *m_ptr,unsigned char *s_ptr)
+                                    457 ;	-----------------------------------------
+                                    458 ;	 function ds1307_GetTime
+                                    459 ;	-----------------------------------------
+      000091                        460 _ds1307_GetTime:
+      000091 AD 82            [24]  461 	mov	r5,dpl
+      000093 AE 83            [24]  462 	mov	r6,dph
+      000095 AF F0            [24]  463 	mov	r7,b
+                                    464 ;	ds1307.c:110: iic_start();           // Start i2c communication
+      000097 C0 07            [24]  465 	push	ar7
+      000099 C0 06            [24]  466 	push	ar6
+      00009B C0 05            [24]  467 	push	ar5
+      00009D 12r00r00         [24]  468 	lcall	_iic_start
+                                    469 ;	ds1307.c:112: ds1307_Write(DS1307_ID);    
+      0000A0 75 82 D0         [24]  470 	mov	dpl,#0xd0
+      0000A3 12r00r88         [24]  471 	lcall	_ds1307_Write
+                                    472 ;	ds1307.c:113: ds1307_Write(SEC_ADDRESS);          
+      0000A6 75 82 00         [24]  473 	mov	dpl,#0x00
+      0000A9 12r00r88         [24]  474 	lcall	_ds1307_Write
+                                    475 ;	ds1307.c:115: iic_stop();             
+      0000AC 12r00r00         [24]  476 	lcall	_iic_stop
+                                    477 ;	ds1307.c:117: iic_start();                
+      0000AF 12r00r00         [24]  478 	lcall	_iic_start
+                                    479 ;	ds1307.c:118: ds1307_Write(0xD1);         
+      0000B2 75 82 D1         [24]  480 	mov	dpl,#0xd1
+      0000B5 12r00r88         [24]  481 	lcall	_ds1307_Write
+                                    482 ;	ds1307.c:121: *s_ptr = ds1307_Read();  iic_ack();     
+      0000B8 AA*03            [24]  483 	mov	r2,_ds1307_GetTime_PARM_3
+      0000BA AB*04            [24]  484 	mov	r3,(_ds1307_GetTime_PARM_3 + 1)
+      0000BC AC*05            [24]  485 	mov	r4,(_ds1307_GetTime_PARM_3 + 2)
+      0000BE C0 04            [24]  486 	push	ar4
+      0000C0 C0 03            [24]  487 	push	ar3
+      0000C2 C0 02            [24]  488 	push	ar2
+      0000C4 12r00r8E         [24]  489 	lcall	_ds1307_Read
+      0000C7 A9 82            [24]  490 	mov	r1,dpl
+      0000C9 D0 02            [24]  491 	pop	ar2
+      0000CB D0 03            [24]  492 	pop	ar3
+      0000CD D0 04            [24]  493 	pop	ar4
+      0000CF 8A 82            [24]  494 	mov	dpl,r2
+      0000D1 8B 83            [24]  495 	mov	dph,r3
+      0000D3 8C F0            [24]  496 	mov	b,r4
+      0000D5 E9               [12]  497 	mov	a,r1
+      0000D6 12r00r00         [24]  498 	lcall	__gptrput
+      0000D9 12r00r00         [24]  499 	lcall	_iic_ack
+                                    500 ;	ds1307.c:122: *m_ptr = ds1307_Read();  iic_ack();     
+      0000DC AA*00            [24]  501 	mov	r2,_ds1307_GetTime_PARM_2
+      0000DE AB*01            [24]  502 	mov	r3,(_ds1307_GetTime_PARM_2 + 1)
+      0000E0 AC*02            [24]  503 	mov	r4,(_ds1307_GetTime_PARM_2 + 2)
+      0000E2 C0 04            [24]  504 	push	ar4
+      0000E4 C0 03            [24]  505 	push	ar3
+      0000E6 C0 02            [24]  506 	push	ar2
+      0000E8 12r00r8E         [24]  507 	lcall	_ds1307_Read
+      0000EB A9 82            [24]  508 	mov	r1,dpl
+      0000ED D0 02            [24]  509 	pop	ar2
+      0000EF D0 03            [24]  510 	pop	ar3
+      0000F1 D0 04            [24]  511 	pop	ar4
+      0000F3 8A 82            [24]  512 	mov	dpl,r2
+      0000F5 8B 83            [24]  513 	mov	dph,r3
+      0000F7 8C F0            [24]  514 	mov	b,r4
+      0000F9 E9               [12]  515 	mov	a,r1
+      0000FA 12r00r00         [24]  516 	lcall	__gptrput
+      0000FD 12r00r00         [24]  517 	lcall	_iic_ack
+                                    518 ;	ds1307.c:123: *h_ptr = ds1307_Read();  iic_nack();   
+      000100 12r00r8E         [24]  519 	lcall	_ds1307_Read
+      000103 AC 82            [24]  520 	mov	r4,dpl
+      000105 D0 05            [24]  521 	pop	ar5
+      000107 D0 06            [24]  522 	pop	ar6
+      000109 D0 07            [24]  523 	pop	ar7
+      00010B 8D 82            [24]  524 	mov	dpl,r5
+      00010D 8E 83            [24]  525 	mov	dph,r6
+      00010F 8F F0            [24]  526 	mov	b,r7
+      000111 EC               [12]  527 	mov	a,r4
+      000112 12r00r00         [24]  528 	lcall	__gptrput
+      000115 12r00r00         [24]  529 	lcall	_iic_nack
+                                    530 ;	ds1307.c:125: iic_stop();                 // stop i2c communication after reading the Time
+                                    531 ;	ds1307.c:126: }
+      000118 02r00r00         [24]  532 	ljmp	_iic_stop
+                                    533 ;------------------------------------------------------------
+                                    534 ;Allocation info for local variables in function 'ds1307_to_bcd'
+                                    535 ;------------------------------------------------------------
+                                    536 ;value                     Allocated to registers r6 r7 
+                                    537 ;------------------------------------------------------------
+                                    538 ;	ds1307.c:150: short ds1307_to_bcd(short value)
+                                    539 ;	-----------------------------------------
+                                    540 ;	 function ds1307_to_bcd
+                                    541 ;	-----------------------------------------
+      00011B                        542 _ds1307_to_bcd:
+                                    543 ;	ds1307.c:152: return ((value / 10) << 4 | (value % 10));
+      00011B AE 82            [24]  544 	mov	r6,dpl
+      00011D AF 83            [24]  545 	mov	r7,dph
+      00011F 75*00 0A         [24]  546 	mov	__divsint_PARM_2,#0x0a
+      000122 75*01 00         [24]  547 	mov	(__divsint_PARM_2 + 1),#0x00
+      000125 C0 07            [24]  548 	push	ar7
+      000127 C0 06            [24]  549 	push	ar6
+      000129 12r00r00         [24]  550 	lcall	__divsint
+      00012C AC 82            [24]  551 	mov	r4,dpl
+      00012E AD 83            [24]  552 	mov	r5,dph
+      000130 D0 06            [24]  553 	pop	ar6
+      000132 D0 07            [24]  554 	pop	ar7
+      000134 ED               [12]  555 	mov	a,r5
+      000135 C4               [12]  556 	swap	a
+      000136 54 F0            [12]  557 	anl	a,#0xf0
+      000138 CC               [12]  558 	xch	a,r4
+      000139 C4               [12]  559 	swap	a
+      00013A CC               [12]  560 	xch	a,r4
+      00013B 6C               [12]  561 	xrl	a,r4
+      00013C CC               [12]  562 	xch	a,r4
+      00013D 54 F0            [12]  563 	anl	a,#0xf0
+      00013F CC               [12]  564 	xch	a,r4
+      000140 6C               [12]  565 	xrl	a,r4
+      000141 FD               [12]  566 	mov	r5,a
+      000142 75*00 0A         [24]  567 	mov	__modsint_PARM_2,#0x0a
+      000145 75*01 00         [24]  568 	mov	(__modsint_PARM_2 + 1),#0x00
+      000148 8E 82            [24]  569 	mov	dpl,r6
+      00014A 8F 83            [24]  570 	mov	dph,r7
+      00014C C0 05            [24]  571 	push	ar5
+      00014E C0 04            [24]  572 	push	ar4
+      000150 12r00r00         [24]  573 	lcall	__modsint
+      000153 AE 82            [24]  574 	mov	r6,dpl
+      000155 AF 83            [24]  575 	mov	r7,dph
+      000157 D0 04            [24]  576 	pop	ar4
+      000159 D0 05            [24]  577 	pop	ar5
+      00015B EE               [12]  578 	mov	a,r6
+      00015C 42 04            [12]  579 	orl	ar4,a
+      00015E EF               [12]  580 	mov	a,r7
+      00015F 42 05            [12]  581 	orl	ar5,a
+      000161 8C 82            [24]  582 	mov	dpl,r4
+      000163 8D 83            [24]  583 	mov	dph,r5
+                                    584 ;	ds1307.c:153: }
+      000165 22               [24]  585 	ret
+                                    586 ;------------------------------------------------------------
+                                    587 ;Allocation info for local variables in function 'ds1307_from_bcd'
+                                    588 ;------------------------------------------------------------
+                                    589 ;bcd                       Allocated to registers r6 r7 
+                                    590 ;------------------------------------------------------------
+                                    591 ;	ds1307.c:155: short ds1307_from_bcd(short bcd)
+                                    592 ;	-----------------------------------------
+                                    593 ;	 function ds1307_from_bcd
+                                    594 ;	-----------------------------------------
+      000166                        595 _ds1307_from_bcd:
+      000166 AE 82            [24]  596 	mov	r6,dpl
+      000168 AF 83            [24]  597 	mov	r7,dph
+                                    598 ;	ds1307.c:157: return ((bcd & 0xF0) >> 4) * 10 + (bcd & 0x0F);
+      00016A 74 F0            [12]  599 	mov	a,#0xf0
+      00016C 5E               [12]  600 	anl	a,r6
+      00016D FC               [12]  601 	mov	r4,a
+      00016E 7D 00            [12]  602 	mov	r5,#0x00
+      000170 8C*00            [24]  603 	mov	__mulint_PARM_2,r4
+      000172 ED               [12]  604 	mov	a,r5
+      000173 C4               [12]  605 	swap	a
+      000174 C5*00            [12]  606 	xch	a,__mulint_PARM_2
+      000176 C4               [12]  607 	swap	a
+      000177 54 0F            [12]  608 	anl	a,#0x0f
+      000179 65*00            [12]  609 	xrl	a,__mulint_PARM_2
+      00017B C5*00            [12]  610 	xch	a,__mulint_PARM_2
+      00017D 54 0F            [12]  611 	anl	a,#0x0f
+      00017F C5*00            [12]  612 	xch	a,__mulint_PARM_2
+      000181 65*00            [12]  613 	xrl	a,__mulint_PARM_2
+      000183 C5*00            [12]  614 	xch	a,__mulint_PARM_2
+      000185 30 E3 02         [24]  615 	jnb	acc.3,00103$
+      000188 44 F0            [12]  616 	orl	a,#0xf0
+      00018A                        617 00103$:
+      00018A F5*01            [12]  618 	mov	(__mulint_PARM_2 + 1),a
+      00018C 90 00 0A         [24]  619 	mov	dptr,#0x000a
+      00018F C0 07            [24]  620 	push	ar7
+      000191 C0 06            [24]  621 	push	ar6
+      000193 12r00r00         [24]  622 	lcall	__mulint
+      000196 AC 82            [24]  623 	mov	r4,dpl
+      000198 AD 83            [24]  624 	mov	r5,dph
+      00019A D0 06            [24]  625 	pop	ar6
+      00019C D0 07            [24]  626 	pop	ar7
+      00019E 53 06 0F         [24]  627 	anl	ar6,#0x0f
+      0001A1 7F 00            [12]  628 	mov	r7,#0x00
+      0001A3 EE               [12]  629 	mov	a,r6
+      0001A4 2C               [12]  630 	add	a,r4
+      0001A5 FC               [12]  631 	mov	r4,a
+      0001A6 EF               [12]  632 	mov	a,r7
+      0001A7 3D               [12]  633 	addc	a,r5
+                                    634 ;	ds1307.c:158: }
+      0001A8 8C 82            [24]  635 	mov	dpl,r4
+      0001AA F5 83            [12]  636 	mov	dph,a
+      0001AC 22               [24]  637 	ret
+                                    638 	.area CSEG    (CODE)
+                                    639 	.area CONST   (CODE)
+                                    640 	.area XINIT   (CODE)
+                                    641 	.area CABS    (ABS,CODE)
